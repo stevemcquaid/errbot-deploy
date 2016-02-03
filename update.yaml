@@ -1,0 +1,97 @@
+#!/usr/bin/env ansible-playbook
+---
+#
+# Use this playbook to update chatops bot
+#
+
+- hosts: all
+  tasks:
+      - name: Copy pubkey
+        authorized_key: user={{ ansible_user_id }} key="{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+      - name: upgrade all packages
+        yum: name=* state=latest
+        sudo: yes
+      - name: Install the 'Development tools' package group
+        yum: name="@Development tools" state=present
+        sudo: yes
+      - name: Install EPEL
+        yum: name=epel-release state=present
+        sudo: yes
+      - name: Install curl
+        yum: name=curl state=present
+        sudo: yes
+      - name: Install nano
+        yum: name=nano state=present
+        sudo: yes
+      - name: Install byobu
+        yum: name=byobu state=present
+        sudo: yes
+      # Start errbot deps
+      - name: Install Pre-Errbot Deps
+        yum: name=python-pip state=present
+        sudo: yes
+      - name: Install Errbot
+        command: pip install err
+        sudo: yes
+      - name: Install Errbot Deps
+        command: pip install sleekxmpp pyasn1 pyasn1-modules slackclient
+        sudo: yes
+      - name: Install Errbot Deps
+        command: pip install --upgrade six
+        sudo: yes
+      - name: Make sure database is up to date
+        command: updatedb
+        sudo: yes
+      - name: Generate config.py file
+        template: src=templates/config.py.j2 dest=/usr/lib/python2.7/site-packages/errbot/config.py owner={{ ansible_user_id }} group=root mode=0755
+        sudo: yes
+      - name: Create /var/lib/err/
+        file: path=/var/lib/err state=directory mode=0755
+        sudo: yes
+      - name: Create /var/log/err/
+        file: path=/var/log/err state=directory mode=0755
+        sudo: yes
+      - name: Create /var/log/err/err.log
+        file: path=/var/log/err/err.log state=touch mode=0755
+        sudo: yes
+      - name: Create /var/log/err/restart.log
+        file: path=/var/log/err/restart.log state=touch mode=0755
+        sudo: yes
+
+        #
+        # Non-bootstrap/install stuff starts here
+        #
+
+      - name: Delete repo
+        file: path="/home/{{ ansible_user_id }}/{{ lookup('ini', 'REPO_NAME section=chatops-playbook file=chatops_env.config') }}" state=absent
+        sudo: yes
+      - name: Copy the code
+        synchronize:
+          src: "{{ lookup('ini', 'SYNC_ABS_PATH section=chatops-playbook file=chatops_env.config') }}/"
+          dest: "/home/{{ ansible_user_id }}/{{ lookup('ini', 'REPO_NAME section=chatops-playbook file=chatops_env.config') }}"
+          delete: yes
+          rsync_opts:
+            - "--no-motd"
+            - "--exclude-from={{ lookup('ini', 'SYNC_ABS_PATH section=chatops-playbook file=chatops_env.config') }}/.gitignore"
+      - name: Generate systemd file
+        template: src=templates/chatops.service.j2 dest=/etc/systemd/system/chatops.service owner={{ ansible_user_id }} group=root mode=0755
+        sudo: yes
+        notify:
+          - reload systemd
+      - name: systemctl enable chatops.service
+        command: systemctl enable chatops.service
+        sudo: yes
+      - name: systemctl restart chatops.service
+        command: systemctl restart chatops.service
+        sudo: yes
+      - name: Generate cron reloader
+        template: src=templates/chatops-restart.cron.j2 dest=/etc/cron.d/chatops-restart owner=root group=root mode=0755
+        sudo: yes
+  handlers:
+    - name: restart chatops.service
+      service: name=chatops.service state=restarted
+    - name: reload systemd
+      sudo: yes
+      command: systemctl daemon-reload
+    - name: restart sshd
+      service: name=sshd state=restarted

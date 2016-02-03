@@ -1,0 +1,27 @@
+; Hubot systemd service unit file
+; Place in: `/etc/systemd/system/chatops.service`, then `systemctl daemon-reload` and `systemctl start chatops.service`
+
+[Unit]
+Description=Chatops
+Requires=network.target
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory={{ lookup('ini', 'WorkingDirectory section=chatops-playbook file=chatops_env.config') }}
+
+StandardOutput=syslog
+SyslogIdentifier=chatops
+User=root
+
+Restart=always
+RestartSec=30
+
+; Configure Hubot environment variables, make sure to use quotes around whitespace as shown below.
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/opt/gdauto/bin:/root/bin
+; EnvironmentFile=-/some/config/file
+
+ExecStart={{ lookup('ini', 'EXEC_START section=chatops-service file=chatops_env.config') }}
+
+[Install]
+WantedBy=multi-user.target

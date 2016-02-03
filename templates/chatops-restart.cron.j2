@@ -1,0 +1,2 @@
+MAILTO=""
+0 * * * * root systemctl restart chatops.service >> {{ lookup('ini', 'LOG_FILE section=chatops-restart.cron file=chatops_env.config') }}

@@ -30,7 +30,7 @@
       - name: Install Pre-Errbot Deps
         yum: name=python-pip state=present
         sudo: yes
-      - name: Install Errbot
+      - name: Install default Errbot
         command: pip install err
         sudo: yes
       - name: Install Errbot Deps
@@ -39,6 +39,25 @@
       - name: Install Errbot Deps
         command: pip install --upgrade six
         sudo: yes
+
+      # err-nettools plugin
+      - name: Install GeoIP
+        yum: name=GeoIP state=present
+        sudo: yes
+      - name: Install gcc
+        yum: name=gcc state=present
+        sudo: yes
+      - name:  Install python-devel
+        yum: name=python-devel state=present
+        sudo: yes
+      - name:  Install GeoIP-devel
+        yum: name=GeoIP-devel state=present
+        sudo: yes
+      - name:
+        command: pip install GeoIP whois
+        sudo: yes
+      # End err-nettools plugin install
+
       - name: Make sure database is up to date
         command: updatedb
         sudo: yes
@@ -56,6 +75,9 @@
         sudo: yes
       - name: Create /var/log/err/restart.log
         file: path=/var/log/err/restart.log state=touch mode=0755
+        sudo: yes
+      - name: Create auto-loaded plugins directory
+        file: path= {{ lookup('ini', 'BOT_EXTRA_PLUGIN_DIR section=chatops-config.py file=chatops_env.config') }} state=directory mode=0755
         sudo: yes
 
         #

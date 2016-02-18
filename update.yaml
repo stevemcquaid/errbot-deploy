@@ -5,9 +5,15 @@
 #
 
 - hosts: all
+  vars:
+    BOT_EXTRA_PLUGIN_DIR: "{{ lookup('ini', 'BOT_EXTRA_PLUGIN_DIR section=chatops-config.py file=chatops_env.config') }}"
+    PLUGINS_SYNC_ABS_PATH: "{{ lookup('ini', 'PLUGINS_SYNC_ABS_PATH section=chatops-playbook file=chatops_env.config') }}"
+    REPO_NAME: "{{ lookup('ini', 'REPO_NAME section=chatops-playbook file=chatops_env.config') }}"
+    SYNC_ABS_PATH: "{{ lookup('ini', 'SYNC_ABS_PATH section=chatops-playbook file=chatops_env.config') }}"
+    TEMP_PLUGINS_PATH: "/home/{{ ansible_user_id }}/"
   tasks:
       - name: Copy pubkey
-        authorized_key: user={{ ansible_user_id }} key="{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+        authorized_key: user={{ ansible_user_id }} key={{ lookup('file', '~/.ssh/id_rsa.pub') }}
       - name: upgrade all packages
         yum: name=* state=latest
         sudo: yes
@@ -26,6 +32,7 @@
       - name: Install byobu
         yum: name=byobu state=present
         sudo: yes
+
       # Start errbot deps
       - name: Install Pre-Errbot Deps
         yum: name=python-pip state=present
@@ -38,6 +45,9 @@
         sudo: yes
       - name: Install Errbot Deps
         command: pip install --upgrade six
+        sudo: yes
+      - name: Install GDOpenstack deps
+        command: pip install python-keystoneclient python-novaclient
         sudo: yes
 
       # err-nettools plugin
@@ -76,25 +86,39 @@
       - name: Create /var/log/err/restart.log
         file: path=/var/log/err/restart.log state=touch mode=0755
         sudo: yes
-      - name: Create auto-loaded plugins directory
-        file: path= {{ lookup('ini', 'BOT_EXTRA_PLUGIN_DIR section=chatops-config.py file=chatops_env.config') }} state=directory mode=0755
-        sudo: yes
 
         #
         # Non-bootstrap/install stuff starts here
         #
-
-      - name: Delete repo
-        file: path="/home/{{ ansible_user_id }}/{{ lookup('ini', 'REPO_NAME section=chatops-playbook file=chatops_env.config') }}" state=absent
+      - name: Delete old plugins
+        file: path={{ BOT_EXTRA_PLUGIN_DIR }} state=absent
         sudo: yes
-      - name: Copy the code
+      - name: Create auto-loaded plugins directory
+        file: path={{ BOT_EXTRA_PLUGIN_DIR }} state=directory mode=0755
+        sudo: yes
+      - name: rsync new plugins
         synchronize:
-          src: "{{ lookup('ini', 'SYNC_ABS_PATH section=chatops-playbook file=chatops_env.config') }}/"
-          dest: "/home/{{ ansible_user_id }}/{{ lookup('ini', 'REPO_NAME section=chatops-playbook file=chatops_env.config') }}"
+          src: "{{ PLUGINS_SYNC_ABS_PATH }}"
+          dest: "{{ TEMP_PLUGINS_PATH }}"
           delete: yes
           rsync_opts:
             - "--no-motd"
-            - "--exclude-from={{ lookup('ini', 'SYNC_ABS_PATH section=chatops-playbook file=chatops_env.config') }}/.gitignore"
+            - "--exclude={{ SYNC_ABS_PATH }}/.gitignore"
+      - name: Move new plugins into place
+        command: mv {{ TEMP_PLUGINS_PATH }}errbot-plugins {{ BOT_EXTRA_PLUGIN_DIR }}
+        sudo: yes
+
+      - name: Delete old errbot
+        file: path="/home/"{{ ansible_user_id }}"/"{{ REPO_NAME }} state=absent
+        sudo: yes
+      - name: rsync new errbot # This actually does not do anything - we need to build package and install from src
+        synchronize:
+          src: "{{ SYNC_ABS_PATH }}"
+          dest: "/home/{{ ansible_user_id }}/{{ REPO_NAME }}"
+          delete: yes
+          rsync_opts:
+            - "--no-motd"
+            - "--exclude-from={{ SYNC_ABS_PATH }}/.gitignore"
       - name: Generate systemd file
         template: src=templates/chatops.service.j2 dest=/etc/systemd/system/chatops.service owner={{ ansible_user_id }} group=root mode=0755
         sudo: yes

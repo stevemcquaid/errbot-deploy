@@ -19,6 +19,11 @@ RestartSec=30
 
 ; Configure Hubot environment variables, make sure to use quotes around whitespace as shown below.
 Environment=PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/opt/gdauto/bin:/root/bin
+Environment=OS_USERNAME={{ lookup('ini', 'OS_USERNAME section=openstack-creds file=chatops_env.config') }}
+Environment=OS_TENANT_NAME={{ lookup('ini', 'OS_TENANT_NAME section=openstack-creds file=chatops_env.config') }}
+Environment=OS_PROJECT_NAME={{ lookup('ini', 'OS_PROJECT_NAME section=openstack-creds file=chatops_env.config') }}
+Environment=OS_PASSWORD={{ lookup('ini', 'OS_PASSWORD section=openstack-creds file=chatops_env.config') }}
+Environment=OS_AUTH_URL={{ lookup('ini', 'OS_AUTH_URL section=openstack-creds file=chatops_env.config') }}
 ; EnvironmentFile=-/some/config/file
 
 ExecStart={{ lookup('ini', 'EXEC_START section=chatops-service file=chatops_env.config') }}

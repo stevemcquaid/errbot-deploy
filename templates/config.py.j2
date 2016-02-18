@@ -70,14 +70,14 @@ BOT_DATA_DIR = '/var/lib/err'
 # locally before publishing it. Note that you can specify only a single
 # directory, however you are free to create subdirectories with multiple
 # plugins inside this directory.
-BOT_EXTRA_PLUGIN_DIR = {{ lookup('ini', 'BOT_EXTRA_PLUGIN_DIR section=chatops-config.py file=chatops_env.config') }}
+BOT_EXTRA_PLUGIN_DIR = "{{ lookup('ini', 'BOT_EXTRA_PLUGIN_DIR section=chatops-config.py file=chatops_env.config') }}"
 
 # If you use an external backend as a plugin,
 # this is where you tell err where to find it.
 # BOT_EXTRA_BACKEND_DIR = '/opt/errbackends'
 
 # If you want only a subset of the core plugins that are bundled with errbot, you can specify them here.
-# CORE_PLUGINS = None # This is default, all core plugins.
+CORE_PLUGINS = {{ lookup('ini', 'CORE_PLUGINS section=chatops-config.py file=chatops_env.config') }} # This is default, all core plugins.
 # For example CORE_PLUGINS = ('ACLs', 'Backup', 'Help') you get those names from the .plug files Name entry.
 # For absolutely no plug: CORE_PLUGINS = ()
 
@@ -162,7 +162,7 @@ BOT_IDENTITY = {
 # Set the admins of your bot. Only these users will have access
 # to the admin-only commands.
 #
-BOT_ADMINS = ({{ lookup('ini', 'BOT_ADMINS section=chatops-config.py file=chatops_env.config') }})
+BOT_ADMINS = {{ lookup('ini', 'BOT_ADMINS section=chatops-config.py file=chatops_env.config') }}
 
 # Chatrooms your bot should join on startup. For the IRC backend you
 # should include the # sign here. For XMPP rooms that are password
@@ -241,16 +241,15 @@ BOT_PREFIX = {{ lookup('ini', 'BOT_PREFIX section=chatops-config.py file=chatops
 
 # Uncomment and set this to True to hide the restricted commands from
 # the help output.
-#HIDE_RESTRICTED_COMMANDS = False
+HIDE_RESTRICTED_COMMANDS = {{ lookup('ini', 'HIDE_RESTRICTED_COMMANDS section=chatops-config.py file=chatops_env.config') }}
 
 # Uncomment and set this to True to ignore commands from users that have no
 # access for these instead of replying with error message.
-#HIDE_RESTRICTED_ACCESS = False
+HIDE_RESTRICTED_ACCESS = {{ lookup('ini', 'HIDE_RESTRICTED_ACCESS section=chatops-config.py file=chatops_env.config') }}
 
 # A list of commands which should be responded to in private, even if
 # the command was given in a MUC. For example:
-# DIVERT_TO_PRIVATE = ('help', 'about', 'status')
-DIVERT_TO_PRIVATE = ()
+DIVERT_TO_PRIVATE = {{ lookup('ini', 'DIVERT_TO_PRIVATE section=chatops-config.py file=chatops_env.config') }}
 
 # Chat relay
 # Can be used to relay one to one message from specific users to the bot
@@ -322,4 +321,4 @@ XMPP_CA_CERT_FILE = None
 # COMPACT_OUTPUT = True
 
 # Prevent ErrBot from saying anything if the command is unrecognized.
-# SUPPRESS_CMD_NOT_FOUND = False
+SUPPRESS_CMD_NOT_FOUND = {{ lookup('ini', 'SUPPRESS_CMD_NOT_FOUND section=chatops-config.py file=chatops_env.config') }}

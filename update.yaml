@@ -90,12 +90,6 @@
         #
         # Non-bootstrap/install stuff starts here
         #
-      - name: Delete old plugins
-        file: path={{ BOT_EXTRA_PLUGIN_DIR }} state=absent
-        sudo: yes
-      - name: Create auto-loaded plugins directory
-        file: path={{ BOT_EXTRA_PLUGIN_DIR }} state=directory mode=0755
-        sudo: yes
       - name: rsync new plugins
         synchronize:
           src: "{{ PLUGINS_SYNC_ABS_PATH }}"
@@ -104,6 +98,12 @@
           rsync_opts:
             - "--no-motd"
             - "--exclude={{ SYNC_ABS_PATH }}/.gitignore"
+      - name: Delete old plugins
+        file: path={{ BOT_EXTRA_PLUGIN_DIR }} state=absent
+        sudo: yes
+      - name: Create auto-loaded plugins directory
+        file: path={{ BOT_EXTRA_PLUGIN_DIR }} state=directory mode=0755
+        sudo: yes
       - name: Move new plugins into place
         command: mv {{ TEMP_PLUGINS_PATH }}errbot-plugins {{ BOT_EXTRA_PLUGIN_DIR }}
         sudo: yes

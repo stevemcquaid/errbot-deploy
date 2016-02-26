@@ -241,7 +241,7 @@ LEVEL0_ACL = {'allowusers': list(ADMIN_USERS),
 # Cloud-only
 LEVEL1_ACL = {'allowusers': list( ADMIN_USERS.union(CLOUD_USERS) ),
               'allowrooms': list(ALL_ROOMS),
-              'allowprivate': True,
+              'allowprivate': False,
 }
 
 # Cloud + Compute
@@ -267,8 +267,8 @@ HELP_ACL = {'denyusers': list(SHIT_LIST_USERS),
 }
 
 EVERYONE_SPAM_ACL = {'denyusers': list(SHIT_LIST_USERS),
-                 'allowrooms': list(ALL_ROOMS),
-                 'allowmuc': False, # Force private
+                     'allowrooms': list(ALL_ROOMS),
+                     'allowmuc': False, # Force private
 }
 
 

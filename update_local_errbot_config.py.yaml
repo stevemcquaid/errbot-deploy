@@ -1,0 +1,16 @@
+#!/usr/bin/env ansible-playbook
+---
+#
+# Use this playbook to update chatops bot
+#
+
+- hosts: localhost
+  vars:
+    BOT_EXTRA_PLUGIN_DIR: "{{ lookup('ini', 'BOT_EXTRA_PLUGIN_DIR section=chatops-config.py file=chatops_env.config') }}"
+    PLUGINS_SYNC_ABS_PATH: "{{ lookup('ini', 'PLUGINS_SYNC_ABS_PATH section=chatops-playbook file=chatops_env.config') }}"
+    REPO_NAME: "{{ lookup('ini', 'REPO_NAME section=chatops-playbook file=chatops_env.config') }}"
+    SYNC_ABS_PATH: "{{ lookup('ini', 'SYNC_ABS_PATH section=chatops-playbook file=chatops_env.config') }}"
+    TEMP_PLUGINS_PATH: "/home/{{ ansible_user_id }}/"
+  tasks:
+      - name: Generate config.py file
+        template: src=templates/config.py.j2 dest={{ SYNC_ABS_PATH }}config.py

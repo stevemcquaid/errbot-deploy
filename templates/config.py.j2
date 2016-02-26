@@ -159,11 +159,6 @@ BOT_IDENTITY = {
     # 'bind_address': ('localhost', 0),
 }
 
-# Set the admins of your bot. Only these users will have access
-# to the admin-only commands.
-#
-BOT_ADMINS = {{ lookup('ini', 'BOT_ADMINS section=chatops-config.py file=chatops_env.config') }}
-
 # Chatrooms your bot should join on startup. For the IRC backend you
 # should include the # sign here. For XMPP rooms that are password
 # protected, you can specify another tuple here instead of a string,
@@ -220,6 +215,63 @@ BOT_PREFIX = {{ lookup('ini', 'BOT_PREFIX section=chatops-config.py file=chatops
 # Access controls and message diversion                                  #
 ##########################################################################
 
+# Set the admins of your bot. Only these users will have access
+# to the admin-only commands.
+#
+ADMIN_USERS = {{ lookup('ini', 'ADMIN_USERS section=chatops-config.py file=chatops_env.config') }}
+BOT_ADMINS = list(ADMIN_USERS)
+
+# Custom rooms here
+ALL_ROOMS = {{ lookup('ini', 'ALL_ROOMS section=chatops-config.py file=chatops_env.config') }}
+
+# Custom teams here
+CLOUD_USERS = {{ lookup('ini', 'CLOUD_USERS section=chatops-config.py file=chatops_env.config') }}
+COMPUTE_USERS = {{ lookup('ini', 'COMPUTE_USERS section=chatops-config.py file=chatops_env.config') }}
+ECM_USERS = {{ lookup('ini', 'ECM_USERS section=chatops-config.py file=chatops_env.config') }}
+FRIENDLY_USERS = {{ lookup('ini', 'FRIENDLY_USERS section=chatops-config.py file=chatops_env.config') }}
+SHIT_LIST_USERS = {{ lookup('ini', 'SHIT_LIST_USERS section=chatops-config.py file=chatops_env.config') }}
+
+
+# Admin-only
+LEVEL0_ACL = {'allowusers': list(ADMIN_USERS),
+              'allowrooms': list(ALL_ROOMS),
+              'allowprivate': True,
+}
+
+# Cloud-only
+LEVEL1_ACL = {'allowusers': list( ADMIN_USERS.union(CLOUD_USERS) ),
+              'allowrooms': list(ALL_ROOMS),
+              'allowprivate': True,
+}
+
+# Cloud + Compute
+LEVEL2_ACL = {'allowusers': list( ADMIN_USERS.union(CLOUD_USERS).union(COMPUTE_USERS) ),
+              'allowrooms': list(ALL_ROOMS),
+              'allowprivate': False,
+}
+
+# Friendly
+LEVEL3_ACL = {'allowusers': list( ADMIN_USERS.union(CLOUD_USERS).union(COMPUTE_USERS).union(ECM_USERS).union(FRIENDLY_USERS) ),
+              'allowrooms': list(ALL_ROOMS),
+              'allowprivate': False,
+}
+
+# Everyone
+EVERYONE_ACL = {'denyusers': list(SHIT_LIST_USERS),
+                'allowrooms': list(ALL_ROOMS),
+                'allowprivate': False,
+}
+
+HELP_ACL = {'denyusers': list(SHIT_LIST_USERS),
+            'allowprivate': True,
+}
+
+EVERYONE_SPAM_ACL = {'denyusers': list(SHIT_LIST_USERS),
+                 'allowrooms': list(ALL_ROOMS),
+                 'allowmuc': False, # Force private
+}
+
+
 # Access controls, allowing commands to be restricted to specific users/rooms.
 # Available filters (you can omit a filter or set it to None to disable it):
 #   allowusers: Allow command from these users only
@@ -231,13 +283,38 @@ BOT_PREFIX = {{ lookup('ini', 'BOT_PREFIX section=chatops-config.py file=chatops
 # Rules listed in ACCESS_CONTROLS_DEFAULT are applied when a command cannot
 # be found inside ACCESS_CONTROLS
 #
-# Example:
-#ACCESS_CONTROLS_DEFAULT = {} # Allow everyone access by default
-#ACCESS_CONTROLS = {'status': {'allowrooms': ('someroom@conference.localhost',)},
-#                   'about': {'denyusers': ('baduser@localhost',), 'allowrooms': ('room1@conference.localhost', 'room2@conference.localhost')},
-#                   'uptime': {'allowusers': BOT_ADMINS},
-#                   'help': {'allowmuc': False},
-#                  }
+ACCESS_CONTROLS_DEFAULT = LEVEL3_ACL
+ACCESS_CONTROLS = {
+                   # Health Commands
+                   'killbot': LEVEL0_ACL,
+                   'restart': LEVEL0_ACL,
+                   'status_gc': LEVEL1_ACL,
+                   'status_load': LEVEL1_ACL,
+                   'status_plugins': LEVEL1_ACL,
+                   'status': LEVEL3_ACL,
+                   'uptime': LEVEL3_ACL,
+
+                   # Help Commands
+                   'about': LEVEL3_ACL,
+                   'apropos': LEVEL3_ACL,
+                   'help': HELP_ACL,
+
+                   # Utils Commands
+                   'echo': LEVEL1_ACL,
+                   'history': LEVEL1_ACL,
+                   'log_tail': LEVEL1_ACL,
+                   'render_test': LEVEL1_ACL,
+                   'whoami': LEVEL1_ACL,
+
+                   # Backup Commands
+                   'backup': LEVEL0_ACL,
+
+                   #GDOpenstack Commands
+                   'nova_addadmin': LEVEL2_ACL,
+                   'nova_removeadmin': LEVEL2_ACL,
+                   'nova_show': LEVEL3_ACL,
+                   'openstack_refreshcache': LEVEL2_ACL,
+}
 
 # Uncomment and set this to True to hide the restricted commands from
 # the help output.

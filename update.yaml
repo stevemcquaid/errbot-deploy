@@ -34,11 +34,17 @@
         sudo: yes
 
       # Start errbot deps
+      - name: Install libffi for err
+        yum: name=libffi-devel state=present
+        sudo: yes
+      - name: Install openssl-devel for err
+        yum: name=openssl-devel state=present
+        sudo: yes
       - name: Install Pre-Errbot Deps
         yum: name=python-pip state=present
         sudo: yes
       - name: Install default Errbot
-        command: pip install err
+        command: pip install err --upgrade
         sudo: yes
       - name: Install Errbot Deps
         command: pip install sleekxmpp pyasn1 pyasn1-modules slackclient
